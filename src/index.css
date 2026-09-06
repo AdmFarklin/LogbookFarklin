@@ -783,3 +783,80 @@ label {
     gap: 0.4rem;
   }
 }
+
+/* ---------------- Upgrade: layout lebih lebar & kartu 2 kolom ---------------- */
+
+.page--wide {
+  max-width: 100%;
+}
+
+.page--wide .assessment-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.assessment-card--split {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 1rem;
+}
+
+.assessment-card-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border-right: 1px solid var(--border);
+  padding-right: 1rem;
+}
+
+.assessment-card-identity .patient-name {
+  font-size: 1rem;
+}
+
+.assessment-card-identity .status-pill {
+  align-self: flex-start;
+}
+
+.assessment-card-identity .row-actions {
+  margin-top: 0.4rem;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.assessment-card-clinical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.assessment-card-clinical p {
+  font-size: 0.88rem;
+}
+
+.search-input {
+  width: 220px;
+}
+
+@media (max-width: 900px) {
+  .page--wide .assessment-list {
+    grid-template-columns: 1fr;
+  }
+
+  .assessment-card--split {
+    grid-template-columns: 1fr;
+  }
+
+  .assessment-card-identity {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding-right: 0;
+    padding-bottom: 0.6rem;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+}
