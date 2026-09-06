@@ -7,5 +7,5 @@ import react from '@vitejs/plugin-react'
 // termuat dengan benar saat dihosting di GitHub Pages.
 export default defineConfig({
   plugins: [react()],
-  base: '/logbook-apoteker/',
+  base: '/LogbookFarklin/',
 })
