@@ -35,8 +35,11 @@ export default function Nav() {
           <NavLink to="/" end onClick={closeMenu}>
             Dashboard
           </NavLink>
-          <NavLink to="/assessments" onClick={closeMenu}>
+          <NavLink to="/assessments" end onClick={closeMenu}>
             Asesmen Pasien
+          </NavLink>
+          <NavLink to="/assessments/all" onClick={closeMenu}>
+            Semua Asesmen
           </NavLink>
           <NavLink to="/antibiotics" onClick={closeMenu}>
             Monitoring Antibiotik
