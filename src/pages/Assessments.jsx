@@ -8,6 +8,7 @@ function emptyForm(tanggal) {
   return {
     tanggal,
     ward_id: '',
+    nomor_kamar: '',
     nama_pasien: '',
     catatan_klinis: '',
     riwayat_alergi: '',
@@ -25,12 +26,14 @@ export default function Assessments() {
   const [wards, setWards] = useState([])
   const [rows, setRows] = useState([])
   const [filterDate, setFilterDate] = useState(todayStr)
+  const [filterWard, setFilterWard] = useState('')
   const [form, setForm] = useState(emptyForm(todayStr))
   const [editingId, setEditingId] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [copiedId, setCopiedId] = useState(null)
 
   useEffect(() => {
     supabase
@@ -44,17 +47,38 @@ export default function Assessments() {
   useEffect(() => {
     loadRows()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterDate])
+  }, [filterDate, filterWard])
 
   async function loadRows() {
     setLoading(true)
-    const { data, error } = await supabase
+    let query = supabase
       .from('assessments')
       .select('*, wards(name, level), profiles(full_name)')
       .eq('tanggal', filterDate)
       .order('created_at', { ascending: false })
+    if (filterWard) query = query.eq('ward_id', Number(filterWard))
+    const { data, error } = await query
     if (!error) setRows(data || [])
     setLoading(false)
+  }
+
+  async function handleCopy(text, id) {
+    if (!text) return
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedId(id)
+      setTimeout(() => setCopiedId((current) => (current === id ? null : current)), 1500)
+    } catch {
+      // Fallback bila clipboard API tidak tersedia
+      const el = document.createElement('textarea')
+      el.value = text
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+      setCopiedId(id)
+      setTimeout(() => setCopiedId((current) => (current === id ? null : current)), 1500)
+    }
   }
 
   function startNew() {
@@ -69,6 +93,7 @@ export default function Assessments() {
     setForm({
       tanggal: row.tanggal,
       ward_id: row.ward_id,
+      nomor_kamar: row.nomor_kamar || '',
       nama_pasien: row.nama_pasien,
       catatan_klinis: row.catatan_klinis || '',
       riwayat_alergi: row.riwayat_alergi || '',
@@ -114,6 +139,14 @@ export default function Assessments() {
         <h1>Asesmen Pasien</h1>
         <div className="page-header-actions">
           <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
+          <select value={filterWard} onChange={(e) => setFilterWard(e.target.value)}>
+            <option value="">Semua ruangan</option>
+            {wards.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name} (Level {w.level})
+              </option>
+            ))}
+          </select>
           <button onClick={startNew}>+ Asesmen baru</button>
         </div>
       </div>
@@ -144,6 +177,14 @@ export default function Assessments() {
                   </option>
                 ))}
               </select>
+            </label>
+            <label>
+              Nomor kamar
+              <input
+                value={form.nomor_kamar}
+                onChange={(e) => setForm({ ...form, nomor_kamar: e.target.value })}
+                placeholder="mis. 3B / Bed 2"
+              />
             </label>
             <label>
               Nama pasien
@@ -234,6 +275,7 @@ export default function Assessments() {
                 <span className="muted">
                   {' '}
                   · {row.wards?.name} (Level {row.wards?.level})
+                  {row.nomor_kamar ? ` · Kamar ${row.nomor_kamar}` : ''}
                 </span>
               </div>
               <span
@@ -242,7 +284,26 @@ export default function Assessments() {
                 {row.status}
               </span>
             </div>
-            {row.catatan_klinis && <p>{row.catatan_klinis}</p>}
+            {row.catatan_klinis && (
+              <div>
+                <p
+                  className="copyable-text"
+                  role="button"
+                  tabIndex={0}
+                  title="Klik untuk menyalin diagnosa &amp; terapi"
+                  onClick={() => handleCopy(row.catatan_klinis, row.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      handleCopy(row.catatan_klinis, row.id)
+                    }
+                  }}
+                >
+                  <strong>Diagnosa &amp; terapi:</strong> {row.catatan_klinis}
+                </p>
+                <span className="copy-hint">{copiedId === row.id ? 'Tersalin!' : 'Klik teks untuk menyalin'}</span>
+              </div>
+            )}
             {row.riwayat_alergi && (
               <p>
                 <strong>Alergi:</strong> {row.riwayat_alergi}
