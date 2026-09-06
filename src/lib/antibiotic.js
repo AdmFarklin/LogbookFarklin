@@ -1,5 +1,11 @@
-// Hari review sesuai kesepakatan: hari ke-5, 7, 10, dan 14
-export const REVIEW_DAYS = [5, 7, 10, 14]
+// Ambang evaluasi: antibiotik yang sudah digunakan 7 hari atau lebih
+// wajib dievaluasi ulang (efektivitas, de-eskalasi, durasi, dsb.)
+export const EVALUATION_THRESHOLD_DAYS = 7
+
+export const EVALUATION_NOTE =
+  'Sudah digunakan \u22657 hari \u2014 perlu evaluasi antibiotik: tinjau hasil kultur/sensitivitas dan ' +
+  'respons klinis, pertimbangkan de-eskalasi atau switch IV ke oral, konfirmasi durasi terapi ' +
+  'yang masih dibutuhkan, dan hentikan bila indikasi sudah tidak ada.'
 
 /**
  * Menghitung antibiotik sudah berjalan hari ke berapa.
@@ -16,14 +22,16 @@ export function hitungHariKe(tanggalMulai) {
 
 /**
  * Menentukan level status untuk styling + label yang ditampilkan.
- * level: 'normal' | 'review' | 'lanjut'
+ * Penandaan hanya diberikan untuk penggunaan 7 hari atau lebih.
+ * level: 'normal' | 'review'
  */
 export function statusReview(hariKe) {
-  if (hariKe > 14) {
-    return { level: 'lanjut', label: `Hari ke-${hariKe} — evaluasi terapi lanjutan` }
+  if (hariKe >= EVALUATION_THRESHOLD_DAYS) {
+    return {
+      level: 'review',
+      label: `Hari ke-${hariKe} \u2014 Perlu Evaluasi`,
+      keterangan: EVALUATION_NOTE,
+    }
   }
-  if (REVIEW_DAYS.includes(hariKe)) {
-    return { level: 'review', label: `Hari ke-${hariKe} — waktunya review` }
-  }
-  return { level: 'normal', label: `Hari ke-${hariKe}` }
+  return { level: 'normal', label: `Hari ke-${hariKe}`, keterangan: '' }
 }
