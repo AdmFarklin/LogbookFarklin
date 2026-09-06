@@ -5,6 +5,7 @@ import Nav from './components/Nav'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Assessments from './pages/Assessments'
+import AllAssessments from './pages/AllAssessments'
 import Antibiotics from './pages/Antibiotics'
 import Admin from './pages/Admin'
 
@@ -40,6 +41,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <Assessments />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/assessments/all"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <AllAssessments />
             </Layout>
           </ProtectedRoute>
         }
