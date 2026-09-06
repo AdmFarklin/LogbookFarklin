@@ -644,7 +644,88 @@ label {
   padding: 0.6em 0.8em;
 }
 
-/* ---------------- Responsive ---------------- */
+/* ---------------- Admin page ---------------- */
+
+.admin-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 1.4rem;
+  margin-bottom: 1.6rem;
+}
+
+.ward-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 1rem;
+}
+
+.ward-table-head,
+.ward-table-row {
+  display: grid;
+  grid-template-columns: 1fr 140px 160px;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.ward-table-head {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  padding: 0 0.2rem 0.3rem;
+}
+
+.ward-table-row {
+  padding: 0.5rem 0.2rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.ward-add-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.ward-add-form input {
+  flex: 1;
+  min-width: 180px;
+}
+
+.ward-add-form select {
+  width: auto;
+}
+
+.review-days-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.review-days-form label {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5em;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.review-days-form input[type='number'] {
+  width: 80px;
+}
+
+.save-confirm {
+  color: var(--accent-success);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
 
 @media (max-width: 720px) {
   .nav-toggle {
@@ -691,5 +772,14 @@ label {
   .antibiotic-row-side {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .ward-table-head {
+    display: none;
+  }
+
+  .ward-table-row {
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
   }
 }
