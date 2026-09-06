@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { hitungHariKe, statusReview } from '../lib/antibiotic'
+import { hitungHariKe, statusReview, EVALUATION_THRESHOLD_DAYS } from '../lib/antibiotic'
+import { getSetting, SETTINGS_KEYS } from '../lib/settings'
 
 const todayStr = new Date().toISOString().slice(0, 10)
 
@@ -25,6 +26,7 @@ export default function Antibiotics() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [reviewDays, setReviewDays] = useState(EVALUATION_THRESHOLD_DAYS)
 
   useEffect(() => {
     supabase
@@ -32,6 +34,7 @@ export default function Antibiotics() {
       .select('*')
       .order('name')
       .then(({ data }) => setWards(data || []))
+    getSetting(SETTINGS_KEYS.ANTIBIOTIC_REVIEW_DAYS).then((v) => setReviewDays(Number(v) || EVALUATION_THRESHOLD_DAYS))
   }, [])
 
   useEffect(() => {
@@ -120,7 +123,8 @@ export default function Antibiotics() {
       </div>
 
       <p className="section-note">
-        Penanda evaluasi otomatis muncul saat antibiotik sudah digunakan 7 hari atau lebih.
+        Penanda evaluasi otomatis muncul saat antibiotik sudah digunakan {reviewDays} hari atau lebih.
+        Interval ini bisa diubah lewat menu Admin.
       </p>
 
       {showForm && (
@@ -185,7 +189,7 @@ export default function Antibiotics() {
       <div className="antibiotic-list">
         {rows.map((row) => {
           const hariKe = hitungHariKe(row.tanggal_mulai)
-          const status = statusReview(hariKe)
+          const status = statusReview(hariKe, reviewDays)
           const level = row.is_active ? status.level : 'selesai'
           const showEvaluasi = row.is_active && status.level === 'review'
           return (
