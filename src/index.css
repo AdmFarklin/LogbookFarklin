@@ -860,3 +860,133 @@ label {
     width: 100%;
   }
 }
+
+/* ---------------- Upgrade: fitur cetak/export referensi visite ---------------- */
+
+.print-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  background: var(--primary-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.print-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.print-checkbox {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.print-checkbox input {
+  width: auto;
+}
+
+.assessment-card.is-selected-for-print {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.print-header {
+  display: none;
+}
+
+/* Elemen ini hanya tampil saat mode cetak (dari browser Ctrl+P / tombol Cetak) */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .app-sidebar,
+  .app-nav,
+  .nav-toggle,
+  .nav-overlay,
+  .no-print,
+  .page-header-actions,
+  .section-note {
+    display: none !important;
+  }
+
+  .app-main {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  .page-header h1 {
+    font-size: 14pt;
+    margin-bottom: 4pt;
+  }
+
+  .print-header {
+    display: block;
+    font-size: 9pt;
+    color: #333;
+    margin-bottom: 8pt;
+    border-bottom: 1px solid #999;
+    padding-bottom: 4pt;
+  }
+
+  .assessment-list {
+    display: block !important;
+  }
+
+  .assessment-card {
+    display: none;
+  }
+
+  .assessment-card.is-selected-for-print {
+    display: grid !important;
+    grid-template-columns: 140px 1fr;
+    gap: 8pt;
+    outline: none;
+    border: 1px solid #999;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 8pt;
+    margin-bottom: 8pt;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 9pt;
+  }
+
+  .assessment-card.is-selected-for-print .patient-name {
+    font-size: 10.5pt;
+  }
+
+  .assessment-card.is-selected-for-print p {
+    font-size: 9pt;
+    margin: 2pt 0;
+  }
+
+  .assessment-card-identity {
+    border-right: 1px solid #ccc;
+    padding-right: 6pt;
+  }
+
+  .status-pill {
+    border: 1px solid #999;
+    background: none !important;
+    color: #333 !important;
+  }
+}
