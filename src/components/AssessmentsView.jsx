@@ -41,6 +41,7 @@ export default function AssessmentsView({ mode = 'mine' }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [copiedId, setCopiedId] = useState(null)
+  const [selectedIds, setSelectedIds] = useState(() => new Set())
 
   useEffect(() => {
     supabase
@@ -53,6 +54,7 @@ export default function AssessmentsView({ mode = 'mine' }) {
 
   useEffect(() => {
     loadRows()
+    setSelectedIds(new Set())
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterDate, filterWard, mode])
 
@@ -73,6 +75,27 @@ export default function AssessmentsView({ mode = 'mine' }) {
   const visibleRows = rows.filter((row) =>
     row.nama_pasien.toLowerCase().includes(search.trim().toLowerCase())
   )
+
+  function toggleSelected(id) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function selectAllVisible() {
+    setSelectedIds(new Set(visibleRows.map((r) => r.id)))
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set())
+  }
+
+  function handlePrint() {
+    window.print()
+  }
 
   async function handleCopy(text, id) {
     if (!text) return
@@ -176,8 +199,33 @@ export default function AssessmentsView({ mode = 'mine' }) {
         </p>
       )}
 
+      {!loading && visibleRows.length > 0 && (
+        <div className="print-bar no-print">
+          <span className="muted">
+            {selectedIds.size > 0
+              ? `${selectedIds.size} pasien dipilih untuk dicetak`
+              : 'Pilih pasien untuk dicetak sebagai referensi visite'}
+          </span>
+          <span className="print-bar-actions">
+            <button type="button" className="link-btn" onClick={selectAllVisible}>
+              Pilih semua ({visibleRows.length})
+            </button>
+            {selectedIds.size > 0 && (
+              <>
+                <button type="button" className="link-btn" onClick={clearSelection}>
+                  Batal pilihan
+                </button>
+                <button type="button" onClick={handlePrint}>
+                  🖨️ Cetak {selectedIds.size} pasien
+                </button>
+              </>
+            )}
+          </span>
+        </div>
+      )}
+
       {showForm && (
-        <form className="panel-form" onSubmit={handleSubmit}>
+        <form className="panel-form no-print" onSubmit={handleSubmit}>
           <div className="form-grid">
             <label>
               Tanggal
@@ -299,78 +347,101 @@ export default function AssessmentsView({ mode = 'mine' }) {
         </p>
       )}
 
-      <div className="assessment-list">
-        {visibleRows.map((row) => (
-          <div key={row.id} className="assessment-card assessment-card--split">
-            <div className="assessment-card-identity">
-              <span
-                className={`status-pill status-pill--${row.status.replace(/\s+/g, '-').toLowerCase()}`}
-              >
-                {row.status}
-              </span>
-              <strong className="patient-name">{row.nama_pasien}</strong>
-              <span className="muted">{row.wards?.name} (Level {row.wards?.level})</span>
-              {row.nomor_kamar && <span className="muted">Kamar {row.nomor_kamar}</span>}
-              <span className="muted meta-date">{row.tanggal}</span>
-              <span className="muted">oleh {row.profiles?.full_name}</span>
-              {(row.pharmacist_id === session.user.id || isAdmin) && (
-                <span className="row-actions">
-                  <button className="link-btn" onClick={() => startEdit(row)}>
-                    Ubah
-                  </button>
-                  <button className="link-btn link-btn--danger" onClick={() => handleDelete(row.id)}>
-                    Hapus
-                  </button>
-                </span>
-              )}
-            </div>
+      <div className="print-header">
+        <strong>Logbook Asesmen Farmasi Klinis</strong> — {filterDate}
+        {filterWard && wards.find((w) => w.id === Number(filterWard))
+          ? ` — ${wards.find((w) => w.id === Number(filterWard)).name}`
+          : ''}
+      </div>
 
-            <div className="assessment-card-clinical">
-              {row.catatan_klinis && (
-                <div>
-                  <p
-                    className="copyable-text"
-                    role="button"
-                    tabIndex={0}
-                    title="Klik untuk menyalin diagnosa & terapi"
-                    onClick={() => handleCopy(row.catatan_klinis, row.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        handleCopy(row.catatan_klinis, row.id)
-                      }
-                    }}
-                  >
-                    <strong>Diagnosa &amp; terapi:</strong> {row.catatan_klinis}
-                  </p>
-                  <span className="copy-hint">
-                    {copiedId === row.id ? 'Tersalin!' : 'Klik teks untuk menyalin'}
+      <div className="assessment-list">
+        {visibleRows.map((row) => {
+          const isSelected = selectedIds.has(row.id)
+          return (
+            <div
+              key={row.id}
+              className={`assessment-card assessment-card--split ${
+                isSelected ? 'is-selected-for-print' : ''
+              }`}
+            >
+              <div className="assessment-card-identity">
+                <label className="print-checkbox no-print">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleSelected(row.id)}
+                  />
+                  Cetak
+                </label>
+                <span
+                  className={`status-pill status-pill--${row.status.replace(/\s+/g, '-').toLowerCase()}`}
+                >
+                  {row.status}
+                </span>
+                <strong className="patient-name">{row.nama_pasien}</strong>
+                <span className="muted">{row.wards?.name} (Level {row.wards?.level})</span>
+                {row.nomor_kamar && <span className="muted">Kamar {row.nomor_kamar}</span>}
+                <span className="muted meta-date">{row.tanggal}</span>
+                <span className="muted no-print">oleh {row.profiles?.full_name}</span>
+                {(row.pharmacist_id === session.user.id || isAdmin) && (
+                  <span className="row-actions no-print">
+                    <button className="link-btn" onClick={() => startEdit(row)}>
+                      Ubah
+                    </button>
+                    <button className="link-btn link-btn--danger" onClick={() => handleDelete(row.id)}>
+                      Hapus
+                    </button>
                   </span>
-                </div>
-              )}
-              {row.riwayat_alergi && (
-                <p>
-                  <strong>Alergi:</strong> {row.riwayat_alergi}
-                </p>
-              )}
-              {row.riwayat_obat && (
-                <p>
-                  <strong>Riwayat obat:</strong> {row.riwayat_obat}
-                </p>
-              )}
-              {row.drp_terkonfirmasi && (
-                <p>
-                  <strong>DRP:</strong> {row.drp_terkonfirmasi}
-                </p>
-              )}
-              {row.feedback_usul && (
-                <p>
-                  <strong>Feedback:</strong> {row.feedback_usul}
-                </p>
-              )}
+                )}
+              </div>
+
+              <div className="assessment-card-clinical">
+                {row.catatan_klinis && (
+                  <div>
+                    <p
+                      className="copyable-text"
+                      role="button"
+                      tabIndex={0}
+                      title="Klik untuk menyalin diagnosa & terapi"
+                      onClick={() => handleCopy(row.catatan_klinis, row.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          handleCopy(row.catatan_klinis, row.id)
+                        }
+                      }}
+                    >
+                      <strong>Diagnosa &amp; terapi:</strong> {row.catatan_klinis}
+                    </p>
+                    <span className="copy-hint no-print">
+                      {copiedId === row.id ? 'Tersalin!' : 'Klik teks untuk menyalin'}
+                    </span>
+                  </div>
+                )}
+                {row.riwayat_alergi && (
+                  <p>
+                    <strong>Alergi:</strong> {row.riwayat_alergi}
+                  </p>
+                )}
+                {row.riwayat_obat && (
+                  <p>
+                    <strong>Riwayat obat:</strong> {row.riwayat_obat}
+                  </p>
+                )}
+                {row.drp_terkonfirmasi && (
+                  <p>
+                    <strong>DRP:</strong> {row.drp_terkonfirmasi}
+                  </p>
+                )}
+                {row.feedback_usul && (
+                  <p>
+                    <strong>Feedback:</strong> {row.feedback_usul}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
