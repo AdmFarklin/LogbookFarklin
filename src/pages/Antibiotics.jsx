@@ -120,7 +120,7 @@ export default function Antibiotics() {
       </div>
 
       <p className="section-note">
-        Review otomatis ditandai pada hari ke-5, 7, 10, dan 14 penggunaan antibiotik.
+        Penanda evaluasi otomatis muncul saat antibiotik sudah digunakan 7 hari atau lebih.
       </p>
 
       {showForm && (
@@ -187,33 +187,44 @@ export default function Antibiotics() {
           const hariKe = hitungHariKe(row.tanggal_mulai)
           const status = statusReview(hariKe)
           const level = row.is_active ? status.level : 'selesai'
+          const showEvaluasi = row.is_active && status.level === 'review'
           return (
             <div key={row.id} className={`antibiotic-row antibiotic-row--${level}`}>
-              <div className="antibiotic-row-main">
-                <strong>{row.nama_pasien}</strong>
-                <span className="muted">
-                  {' '}
-                  · {row.nama_antibiotik}
-                  {row.wards?.name ? ` · ${row.wards.name}` : ''}
-                </span>
-                {row.catatan && <p className="muted">{row.catatan}</p>}
-              </div>
-              <div className="antibiotic-row-side">
-                <span className="badge">{row.is_active ? status.label : 'Selesai'}</span>
-                {(row.created_by === session.user.id || isAdmin) && (
-                  <span className="row-actions">
-                    <button className="link-btn" onClick={() => startEdit(row)}>
-                      Ubah
-                    </button>
-                    <button className="link-btn" onClick={() => toggleActive(row)}>
-                      {row.is_active ? 'Tandai selesai' : 'Aktifkan lagi'}
-                    </button>
-                    <button className="link-btn link-btn--danger" onClick={() => handleDelete(row.id)}>
-                      Hapus
-                    </button>
+              <div className="antibiotic-row-top">
+                <div className="antibiotic-row-main">
+                  <strong>{row.nama_pasien}</strong>
+                  <span className="muted">
+                    {' '}
+                    · {row.nama_antibiotik}
+                    {row.wards?.name ? ` · ${row.wards.name}` : ''}
                   </span>
-                )}
+                  {row.catatan && <p className="muted">{row.catatan}</p>}
+                </div>
+                <div className="antibiotic-row-side">
+                  <span className={`badge ${showEvaluasi ? 'badge--evaluasi' : ''}`}>
+                    {showEvaluasi && <span className="badge-dot" aria-hidden="true" />}
+                    {row.is_active ? status.label : 'Selesai'}
+                  </span>
+                  {(row.created_by === session.user.id || isAdmin) && (
+                    <span className="row-actions">
+                      <button className="link-btn" onClick={() => startEdit(row)}>
+                        Ubah
+                      </button>
+                      <button className="link-btn" onClick={() => toggleActive(row)}>
+                        {row.is_active ? 'Tandai selesai' : 'Aktifkan lagi'}
+                      </button>
+                      <button className="link-btn link-btn--danger" onClick={() => handleDelete(row.id)}>
+                        Hapus
+                      </button>
+                    </span>
+                  )}
+                </div>
               </div>
+              {showEvaluasi && (
+                <div className="antibiotic-evaluation-note">
+                  <strong>Keterangan evaluasi:</strong> {status.keterangan}
+                </div>
+              )}
             </div>
           )
         })}
