@@ -33,6 +33,7 @@ export default function AssessmentsView({ mode = 'mine' }) {
   const [rows, setRows] = useState([])
   const [filterDate, setFilterDate] = useState(todayStr)
   const [filterWard, setFilterWard] = useState('')
+  const [search, setSearch] = useState('')
   const [form, setForm] = useState(emptyForm(todayStr))
   const [editingId, setEditingId] = useState(null)
   const [showForm, setShowForm] = useState(false)
@@ -69,6 +70,10 @@ export default function AssessmentsView({ mode = 'mine' }) {
     setLoading(false)
   }
 
+  const visibleRows = rows.filter((row) =>
+    row.nama_pasien.toLowerCase().includes(search.trim().toLowerCase())
+  )
+
   async function handleCopy(text, id) {
     if (!text) return
     try {
@@ -76,7 +81,6 @@ export default function AssessmentsView({ mode = 'mine' }) {
       setCopiedId(id)
       setTimeout(() => setCopiedId((current) => (current === id ? null : current)), 1500)
     } catch {
-      // Fallback bila clipboard API tidak tersedia
       const el = document.createElement('textarea')
       el.value = text
       document.body.appendChild(el)
@@ -141,10 +145,17 @@ export default function AssessmentsView({ mode = 'mine' }) {
   }
 
   return (
-    <div className="page">
+    <div className="page page--wide">
       <div className="page-header">
         <h1>{isMineMode ? 'Asesmen Pasien (Saya)' : 'Semua Asesmen Pasien'}</h1>
         <div className="page-header-actions">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Cari nama pasien…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
           <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
           <select value={filterWard} onChange={(e) => setFilterWard(e.target.value)}>
             <option value="">Semua ruangan</option>
@@ -278,66 +289,29 @@ export default function AssessmentsView({ mode = 'mine' }) {
       )}
 
       {loading && <p>Memuat…</p>}
-      {!loading && rows.length === 0 && (
+      {!loading && visibleRows.length === 0 && (
         <p className="empty-note">
-          {isMineMode ? 'Belum ada asesmen yang kamu buat pada tanggal ini.' : 'Belum ada asesmen pada tanggal ini.'}
+          {search
+            ? 'Tidak ada pasien yang cocok dengan pencarian.'
+            : isMineMode
+            ? 'Belum ada asesmen yang kamu buat pada tanggal ini.'
+            : 'Belum ada asesmen pada tanggal ini.'}
         </p>
       )}
 
       <div className="assessment-list">
-        {rows.map((row) => (
-          <div key={row.id} className="assessment-card">
-            <div className="assessment-card-head">
-              <div>
-                <strong>{row.nama_pasien}</strong>
-                <span className="muted">
-                  {' '}
-                  · {row.wards?.name} (Level {row.wards?.level})
-                  {row.nomor_kamar ? ` · Kamar ${row.nomor_kamar}` : ''}
-                </span>
-              </div>
+        {visibleRows.map((row) => (
+          <div key={row.id} className="assessment-card assessment-card--split">
+            <div className="assessment-card-identity">
               <span
                 className={`status-pill status-pill--${row.status.replace(/\s+/g, '-').toLowerCase()}`}
               >
                 {row.status}
               </span>
-            </div>
-            {row.catatan_klinis && (
-              <div>
-                <p
-                  className="copyable-text"
-                  role="button"
-                  tabIndex={0}
-                  title="Klik untuk menyalin diagnosa &amp; terapi"
-                  onClick={() => handleCopy(row.catatan_klinis, row.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      handleCopy(row.catatan_klinis, row.id)
-                    }
-                  }}
-                >
-                  <strong>Diagnosa &amp; terapi:</strong> {row.catatan_klinis}
-                </p>
-                <span className="copy-hint">{copiedId === row.id ? 'Tersalin!' : 'Klik teks untuk menyalin'}</span>
-              </div>
-            )}
-            {row.riwayat_alergi && (
-              <p>
-                <strong>Alergi:</strong> {row.riwayat_alergi}
-              </p>
-            )}
-            {row.drp_terkonfirmasi && (
-              <p>
-                <strong>DRP:</strong> {row.drp_terkonfirmasi}
-              </p>
-            )}
-            {row.feedback_usul && (
-              <p>
-                <strong>Feedback:</strong> {row.feedback_usul}
-              </p>
-            )}
-            <div className="assessment-card-foot">
+              <strong className="patient-name">{row.nama_pasien}</strong>
+              <span className="muted">{row.wards?.name} (Level {row.wards?.level})</span>
+              {row.nomor_kamar && <span className="muted">Kamar {row.nomor_kamar}</span>}
+              <span className="muted meta-date">{row.tanggal}</span>
               <span className="muted">oleh {row.profiles?.full_name}</span>
               {(row.pharmacist_id === session.user.id || isAdmin) && (
                 <span className="row-actions">
@@ -348,6 +322,51 @@ export default function AssessmentsView({ mode = 'mine' }) {
                     Hapus
                   </button>
                 </span>
+              )}
+            </div>
+
+            <div className="assessment-card-clinical">
+              {row.catatan_klinis && (
+                <div>
+                  <p
+                    className="copyable-text"
+                    role="button"
+                    tabIndex={0}
+                    title="Klik untuk menyalin diagnosa & terapi"
+                    onClick={() => handleCopy(row.catatan_klinis, row.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleCopy(row.catatan_klinis, row.id)
+                      }
+                    }}
+                  >
+                    <strong>Diagnosa &amp; terapi:</strong> {row.catatan_klinis}
+                  </p>
+                  <span className="copy-hint">
+                    {copiedId === row.id ? 'Tersalin!' : 'Klik teks untuk menyalin'}
+                  </span>
+                </div>
+              )}
+              {row.riwayat_alergi && (
+                <p>
+                  <strong>Alergi:</strong> {row.riwayat_alergi}
+                </p>
+              )}
+              {row.riwayat_obat && (
+                <p>
+                  <strong>Riwayat obat:</strong> {row.riwayat_obat}
+                </p>
+              )}
+              {row.drp_terkonfirmasi && (
+                <p>
+                  <strong>DRP:</strong> {row.drp_terkonfirmasi}
+                </p>
+              )}
+              {row.feedback_usul && (
+                <p>
+                  <strong>Feedback:</strong> {row.feedback_usul}
+                </p>
               )}
             </div>
           </div>
