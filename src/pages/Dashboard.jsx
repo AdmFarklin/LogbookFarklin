@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import { hitungHariKe, statusReview } from '../lib/antibiotic'
+import { hitungHariKe, statusReview, EVALUATION_THRESHOLD_DAYS } from '../lib/antibiotic'
+import { getSetting, SETTINGS_KEYS } from '../lib/settings'
 
 export default function Dashboard() {
   const [todayCount, setTodayCount] = useState(null)
@@ -15,6 +16,7 @@ export default function Dashboard() {
   async function load() {
     setLoading(true)
     const today = new Date().toISOString().slice(0, 10)
+    const reviewDays = Number(await getSetting(SETTINGS_KEYS.ANTIBIOTIC_REVIEW_DAYS)) || EVALUATION_THRESHOLD_DAYS
 
     const { count } = await supabase
       .from('assessments')
@@ -29,7 +31,7 @@ export default function Dashboard() {
     const withStatus = (antibiotics || [])
       .map((a) => {
         const hariKe = hitungHariKe(a.tanggal_mulai)
-        return { ...a, hariKe, status: statusReview(hariKe) }
+        return { ...a, hariKe, status: statusReview(hariKe, reviewDays) }
       })
       .filter((a) => a.status.level !== 'normal')
       .sort((a, b) => b.hariKe - a.hariKe)
